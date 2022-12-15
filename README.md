@@ -48,7 +48,7 @@ Create a classes.txt file with all the class in your dataset, and upload it, exa
 
 The last step is to define the requirements needed for the execution, note that the requirements used may change in the future creating dependencies issues, to fix it create an enviroment with the suggest versions, you can use the requirements.txt file below.
 
-{% file src=".gitbook/assets/requirements.txt" %}
+{% file src="img/requirements.txt" %}
 
 ## Set Colab enviroment
 
