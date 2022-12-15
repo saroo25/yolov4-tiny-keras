@@ -1,0 +1,9 @@
+Interruttore
+Leva_Bottom-Left
+Leva_Top-Left
+Leva_Top-Right
+Margherita_Left
+Margherita_right
+Pressometro
+Sistema
+Valvola
