@@ -1,180 +1,206 @@
-## YOLOV4-Tiny：You Only Look Once-Tiny目标检测模型在Keras当中的实现
+---
+description: >-
+  In this page you will learn how to finetune the Tiny Yolov4 version
+  implemented in this github repo:
+  https://github.com/bubbliiiing/yolov4-tiny-keras, using google colab platform.
 ---
 
-## 目录
-1. [仓库更新 Top News](#仓库更新)
-2. [相关仓库 Related code](#相关仓库)
-3. [性能情况 Performance](#性能情况)
-4. [所需环境 Environment](#所需环境)
-5. [文件下载 Download](#文件下载)
-6. [训练步骤 How2train](#训练步骤)
-7. [预测步骤 How2predict](#预测步骤)
-8. [评估步骤 How2eval](#评估步骤)
-9. [参考资料 Reference](#Reference)
+# Tiny Yolov4 FineTune
 
-## Top News
-**`2022-04`**:**支持多GPU训练，新增各个种类目标数量计算，新增heatmap。**  
+## Import Dependencies
 
-**`2022-03`**:**进行了大幅度的更新，修改了loss组成，使得分类、目标、回归loss的比例合适、支持step、cos学习率下降法、支持adam、sgd优化器选择、支持学习率根据batch_size自适应调整、新增图片裁剪。**  
-BiliBili视频中的原仓库地址为：https://github.com/bubbliiiing/yolov4-tiny-keras/tree/bilibili
+Before start the finetuning we need to upload some data on our drive, Google colab have a good integration with drive. Using Drive API's you can import your data easly.\
+Download the base weights of the model, pretrained on coco, from [this](https://github.com/bubbliiiing/yolov4-tiny-keras/releases/download/v1.1/yolov4\_tiny\_weights\_coco.h5) link, and upload on your drive.
 
-**`2021-10`**:**进行了大幅度的更新，增加了大量注释、增加了大量可调整参数、对代码的组成模块进行修改、增加fps、视频预测、批量预测等功能。**   
+On your drive create two folders, one for your images and the other for store the annotation, Tiny Yolov4 require Voc format annotation, like the following example:
 
-## 相关仓库
-| 模型 | 路径 |
-| :----- | :----- |
-YoloV3 | https://github.com/bubbliiiing/yolo3-keras  
-Efficientnet-Yolo3 | https://github.com/bubbliiiing/efficientnet-yolo3-keras  
-YoloV4 | https://github.com/bubbliiiing/yolov4-keras
-YoloV4-tiny | https://github.com/bubbliiiing/yolov4-tiny-keras
-Mobilenet-Yolov4 | https://github.com/bubbliiiing/mobilenet-yolov4-keras
-YoloV5-V5.0 | https://github.com/bubbliiiing/yolov5-keras
-YoloV5-V6.1 | https://github.com/bubbliiiing/yolov5-v6.1-keras
-YoloX | https://github.com/bubbliiiing/yolox-keras
-YoloV7 | https://github.com/bubbliiiing/yolov7-keras
-Yolov7-tiny | https://github.com/bubbliiiing/yolov7-tiny-keras
-
-## 性能情况
-| 训练数据集 | 权值文件名称 | 测试数据集 | 输入图片大小 | mAP 0.5:0.95 | mAP 0.5 |
-| :-----: | :-----: | :------: | :------: | :------: | :-----: |
-| VOC07+12+COCO | [yolov4_tiny_weights_voc.h5](https://github.com/bubbliiiing/yolov4-tiny-keras/releases/download/v1.1/yolov4_tiny_weights_voc.h5) | VOC-Test07 | 416x416 | - | 77.5
-| VOC07+12+COCO | [yolov4_tiny_weights_voc_SE.h5](https://github.com/bubbliiiing/yolov4-tiny-keras/releases/download/v1.1/yolov4_tiny_weights_voc_SE.h5) | VOC-Test07 | 416x416 | - | 78.6
-| VOC07+12+COCO | [yolov4_tiny_weights_voc_CBAM.h5](https://github.com/bubbliiiing/yolov4-tiny-keras/releases/download/v1.1/yolov4_tiny_weights_voc_CBAM.h5) | VOC-Test07 | 416x416 | - | 78.9
-| VOC07+12+COCO | [yolov4_tiny_weights_voc_ECA.h5](https://github.com/bubbliiiing/yolov4-tiny-keras/releases/download/v1.1/yolov4_tiny_weights_voc_ECA.h5) | VOC-Test07 | 416x416 | - | 78.2
-| COCO-Train2017 | [yolov4_tiny_weights_coco.h5](https://github.com/bubbliiiing/yolov4-tiny-keras/releases/download/v1.1/yolov4_tiny_weights_coco.h5) | COCO-Val2017 | 416x416 | 21.8 | 41.3
-
-## 所需环境
-tensorflow-gpu==1.13.1  
-keras==2.1.5  
-
-## 文件下载
-训练所需的各类权值均可在百度网盘中下载。   
-链接: https://pan.baidu.com/s/1f9VXWsi4fcYEkEO2YPQKIw    
-提取码: i2ut  
-
-VOC数据集下载地址如下，里面已经包括了训练集、测试集、验证集（与测试集一样），无需再次划分：  
-链接: https://pan.baidu.com/s/19Mw2u_df_nBzsC2lg20fQA   
-提取码: j5ge   
-
-## 训练步骤
-### a、训练VOC07+12数据集
-1. 数据集的准备   
-**本文使用VOC格式进行训练，训练前需要下载好VOC07+12的数据集，解压后放在根目录**  
-
-2. 数据集的处理   
-修改voc_annotation.py里面的annotation_mode=2，运行voc_annotation.py生成根目录下的2007_train.txt和2007_val.txt。   
-
-3. 开始网络训练   
-train.py的默认参数用于训练VOC数据集，直接运行train.py即可开始训练。   
-
-4. 训练结果预测   
-训练结果预测需要用到两个文件，分别是yolo.py和predict.py。我们首先需要去yolo.py里面修改model_path以及classes_path，这两个参数必须要修改。   
-**model_path指向训练好的权值文件，在logs文件夹里。   
-classes_path指向检测类别所对应的txt。**   
-完成修改后就可以运行predict.py进行检测了。运行后输入图片路径即可检测。   
-
-### b、训练自己的数据集
-1. 数据集的准备  
-**本文使用VOC格式进行训练，训练前需要自己制作好数据集，**    
-训练前将标签文件放在VOCdevkit文件夹下的VOC2007文件夹下的Annotation中。   
-训练前将图片文件放在VOCdevkit文件夹下的VOC2007文件夹下的JPEGImages中。   
-
-2. 数据集的处理  
-在完成数据集的摆放之后，我们需要利用voc_annotation.py获得训练用的2007_train.txt和2007_val.txt。   
-修改voc_annotation.py里面的参数。第一次训练可以仅修改classes_path，classes_path用于指向检测类别所对应的txt。   
-训练自己的数据集时，可以自己建立一个cls_classes.txt，里面写自己所需要区分的类别。   
-model_data/cls_classes.txt文件内容为：      
-```python
-cat
-dog
-...
+```xml
+<annotation>
+    <folder>Image Folder</folder>
+    <filename>_name.jpg</filename>
+    <size>
+        <width>1128</width>
+        <height>2000</height>
+        <depth>3</depth>
+    </size>
+    <segmented>0</segmented> 
+    <object> //you can add an arbitrary number of object
+        <name>Class name of the object</name>
+        <pose>Unspecified</pose>
+        <truncated>0</truncated>
+        <occluded>0</occluded>
+        <difficult>0</difficult>
+        <bndbox>
+            <xmin>195</xmin>
+            <ymin>437</ymin>
+            <xmax>870</xmax>
+            <ymax>1325</ymax>
+        </bndbox>
+    </object>
+</annotation>
 ```
-修改voc_annotation.py中的classes_path，使其对应cls_classes.txt，并运行voc_annotation.py。  
 
-3. 开始网络训练  
-**训练的参数较多，均在train.py中，大家可以在下载库后仔细看注释，其中最重要的部分依然是train.py里的classes_path。**  
-**classes_path用于指向检测类别所对应的txt，这个txt和voc_annotation.py里面的txt一样！训练自己的数据集必须要修改！**  
-修改完classes_path后就可以运行train.py开始训练了，在训练多个epoch后，权值会生成在logs文件夹中。  
+You need to create an annotation for each image you want to process, also if the image is named as Image.jpg then the respective annotation should be called Image.xml.
 
-4. 训练结果预测  
-训练结果预测需要用到两个文件，分别是yolo.py和predict.py。在yolo.py里面修改model_path以及classes_path。  
-**model_path指向训练好的权值文件，在logs文件夹里。  
-classes_path指向检测类别所对应的txt。**  
-完成修改后就可以运行predict.py进行检测了。运行后输入图片路径即可检测。  
+Create a classes.txt file with all the class in your dataset, and upload it, example:
 
-## 预测步骤
-### a、使用预训练权重
-1. 下载完库后解压，在百度网盘下载yolo_weights.pth，放入model_data，运行predict.py，输入  
-```python
-img/street.jpg
+{% file src=".gitbook/assets/pipe_classes.txt" %}
+
+The last step is to define the requirements needed for the execution, note that the requirements used may change in the future creating dependencies issues, to fix it create an enviroment with the suggest versions, you can use the requirements.txt file below.
+
+{% file src=".gitbook/assets/requirements.txt" %}
+
+## Set Colab enviroment
+
+Open [google colab](https://colab.research.google.com/), and create new project, now import the Tiny Yolov4 repository using:
+
+```shell
+! git clone https://github.com/bubbliiiing/yolov4-tiny-keras
 ```
-2. 在predict.py里面进行设置可以进行fps测试和video视频检测。  
-### b、使用自己训练的权重
-1. 按照训练步骤训练。  
-2. 在yolo.py文件里面，在如下部分修改model_path和classes_path使其对应训练好的文件；**model_path对应logs文件夹下面的权值文件，classes_path是model_path对应分的类**。  
+
+Now import your Drive too using:
+
 ```python
-_defaults = {
-    #--------------------------------------------------------------------------#
-    #   使用自己训练好的模型进行预测一定要修改model_path和classes_path！
-    #   model_path指向logs文件夹下的权值文件，classes_path指向model_data下的txt
-    #   如果出现shape不匹配，同时要注意训练时的model_path和classes_path参数的修改
-    #--------------------------------------------------------------------------#
-    "model_path"        : 'model_data/yolov4_tiny_weights_coco.h5',
-    "classes_path"      : 'model_data/coco_classes.txt',
-    #---------------------------------------------------------------------#
-    #   anchors_path代表先验框对应的txt文件，一般不修改。
-    #   anchors_mask用于帮助代码找到对应的先验框，一般不修改。
-    #---------------------------------------------------------------------#
-    "anchors_path"      : 'model_data/yolo_anchors.txt',
-    "anchors_mask"      : [[3,4,5], [1,2,3]],
-    #-------------------------------#
-    #   所使用的注意力机制的类型
-    #   phi = 0为不使用注意力机制
-    #   phi = 1为SE
-    #   phi = 2为CBAM
-    #   phi = 3为ECA
-    #-------------------------------#
-    "phi"               : 0,  
-    #---------------------------------------------------------------------#
-    #   输入图片的大小，必须为32的倍数。
-    #---------------------------------------------------------------------#
-    "input_shape"       : [416, 416],
-    #---------------------------------------------------------------------#
-    #   只有得分大于置信度的预测框会被保留下来
-    #---------------------------------------------------------------------#
-    "confidence"        : 0.5,
-    #---------------------------------------------------------------------#
-    #   非极大抑制所用到的nms_iou大小
-    #---------------------------------------------------------------------#
-    "nms_iou"           : 0.3,
-    "max_boxes"         : 100,
-    #---------------------------------------------------------------------#
-    #   该变量用于控制是否使用letterbox_image对输入图像进行不失真的resize，
-    #   在多次测试后，发现关闭letterbox_image直接resize的效果更好
-    #---------------------------------------------------------------------#
-    "letterbox_image"   : False,
-}
+from google.colab import drive
+drive.mount("/content/gdrive")
 ```
-3. 运行predict.py，输入  
+
+Copy the annotations,  from the folder to the `yolov4-tiny-keras/VOCdevkit/VOC2007/Annotations` folder. To simplify the work, I defined a copy function from source folder to destination folder, described below.
+
 ```python
-img/street.jpg
+import os
+import shutil
+def file_copy(source_folder,destination_folder):
+  for annotation in os.listdir(source_folder):
+    source =os.path.join(source_folder,annotation)  
+    destination = os.path.join(destination_folder,annotation) 
+    if os.path.isfile(source):
+      shutil.copy(source, destination)
 ```
-4. 在predict.py里面进行设置可以进行fps测试和video视频检测。  
 
-## 评估步骤 
-### a、评估VOC07+12的测试集
-1. 本文使用VOC格式进行评估。VOC07+12已经划分好了测试集，无需利用voc_annotation.py生成ImageSets文件夹下的txt。
-2. 在yolo.py里面修改model_path以及classes_path。**model_path指向训练好的权值文件，在logs文件夹里。classes_path指向检测类别所对应的txt。**  
-3. 运行get_map.py即可获得评估结果，评估结果会保存在map_out文件夹中。
+Now you easly use it typing:&#x20;
 
-### b、评估自己的数据集
-1. 本文使用VOC格式进行评估。  
-2. 如果在训练前已经运行过voc_annotation.py文件，代码会自动将数据集划分成训练集、验证集和测试集。如果想要修改测试集的比例，可以修改voc_annotation.py文件下的trainval_percent。trainval_percent用于指定(训练集+验证集)与测试集的比例，默认情况下 (训练集+验证集):测试集 = 9:1。train_percent用于指定(训练集+验证集)中训练集与验证集的比例，默认情况下 训练集:验证集 = 9:1。
-3. 利用voc_annotation.py划分测试集后，前往get_map.py文件修改classes_path，classes_path用于指向检测类别所对应的txt，这个txt和训练时的txt一样。评估自己的数据集必须要修改。
-4. 在yolo.py里面修改model_path以及classes_path。**model_path指向训练好的权值文件，在logs文件夹里。classes_path指向检测类别所对应的txt。**  
-5. 运行get_map.py即可获得评估结果，评估结果会保存在map_out文件夹中。
+```python
+file_copy(source_path, destination_path)
+```
 
-## Reference
-https://github.com/qqwweee/keras-yolo3  
-https://github.com/eriklindernoren/PyTorch-YOLOv3   
-https://github.com/BobLiu20/YOLOv3_PyTorch
+Do the same from Image folder to `yolov4-tiny-keras/VOCdevkit/VOC2007/JPEGImages`
+
+Now copy `yolov4_tiny_weights_coco.h5` and `classes.txt` file from your drive to the `yolov4-tiny-keras/model_data` folder and the `requirements.txt` file to the `yolov4-tiny-keras` folder.
+
+Run these commands to set up required dependencies:
+
+```shell
+!pip uninstall tensorflow
+! pip install -r /content/yolov4-tiny-keras/requirements.txt
+```
+
+## Train the model
+
+First we need to split the dataset into train e validation set using `yolov4-tiny-keras/voc_annotation.py`, before run the script we have to change the variable `classes_path` **** at **line 23** to our classes.txt file.
+
+```python
+classes_path = 'model_data/pipe_classes.txt'
+```
+
+After the change run:
+
+```shell
+! python yolov4-tiny-keras/voc_annotation.py
+```
+
+Running this script produced the files 2007\_train.txt and 2007\_val.txt.
+
+We can finally finetune our mode, before run the `yolov4-tiny-keras/train.py` script, we need to change the `classes_path` at **line 50** and `model_path` at **line 80** variables as follows.
+
+```
+classes_path = 'model_data/pipe_classes.txt'
+```
+
+```
+model_path = '/content/yolov4-tiny-keras/model_data/yolov4_tiny_weights_coco.h5'
+```
+
+During the execution the train.py script produces outputs that are stored in the logs folder, here we can find files like **epxxx-lossxxx-val\_lossxxx.xxx.h5**, this file rapresents the weights of the model at certain epoch, this weights are usefull when you want to resume the training from a checkpoint.
+
+### Resume the Training
+
+Sometimes the train can be stopped by colab, to prevent the progress loss is strongly recommended to download periodically the `yolov4-tiny-keras/logs` folder.
+
+To resume the train instahead of upload the yolov4\_tiny\_weights\_coco.h5 weights we can upload the most recent of the **epxxx-lossxxx-val\_lossxxx.xxx.h5** files.
+
+the variable `Inint_Epoch` at **line 163** in the train.py script should be changed as follow.
+
+```
+Init_Epoch= Epoch_value_in_epxxx
+```
+
+Note that the variables `classes_path` and `model_path` will need to be changed as described above.
+
+## Convert to ONNX format
+
+Once the model is trained we need to obtain the structure.json file used to convert the model to ONNX format. To do this we need to add the following lines of code to the summary.py file:
+
+```python
+json_string = model.to_json()
+open('model_data/structure.json', 'w').write(json_string)
+```
+
+Also needs to be changed the variable num\_classes at **line 9**&#x20;
+
+Now we can convert the model using the structure.json and the desidered weights using the following script:
+
+```python
+import tensorflow as tf
+import os
+os.environ['TF_KERAS'] = '1'
+import keras2onnx
+model_file = open('model_data/structure.json').read()
+model = tf.keras.models.model_from_json(model_file, custom_objects={'tf': tf})
+weights_path = input('model weights path: ')
+model.load_weights(weights_path)
+onnx_model = keras2onnx.convert_keras(
+    model, 
+    model.name, 
+    channel_first_inputs=['input_1'], 
+    target_opset=9
+    )
+keras2onnx.save_model(onnx_model, 'model_data/yolov4_tiny.onnx')pyth
+```
+
+## Convert ONNX to Barracuda
+
+&#x20;If we want to run the ONNX model on Unity we need to convert it in barracuda format, you can follow this script:
+
+```python
+import numpy as np
+import onnx
+from onnx import checker, helper
+from onnx import AttributeProto, TensorProto, GraphProto
+from onnx import numpy_helper as np_helper
+old_onnx = 'model_data/yolov4_tiny.onnx'
+new_onnx = 'model_data/yolov4_tiny_barracuda.onnx'
+def scan_split_ops(model):
+  for i in range(len(model.graph.node)):
+    # Node type check
+    node = model.graph.node[i]
+    if node.op_type != 'Split': continue
+    # Output tensor shape
+    output = next(v for v in model.graph.value_info if v.name == node.output[0])
+    shape = tuple(map(lambda x: x.dim_value, output.type.tensor_type.shape.dim))
+    shape = (shape[3], shape[3])
+    # "split" attribute addition
+    new_node = helper.make_node('Split',
+                                 node.input,
+                                 node.output, 
+                                 split = shape, 
+                                 axis = 3)
+    # Node replacement
+    model.graph.node.insert(i, new_node)
+    model.graph.node.remove(node)
+model = onnx.load(old_onnx)
+model = onnx.shape_inference.infer_shapes(model)
+scan_split_ops(model)
+checker.check_model(model)
+onnx.save(model,new_onnx)
+```
