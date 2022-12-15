@@ -42,13 +42,12 @@ On your drive create two folders, one for your images and the other for store th
 
 You need to create an annotation for each image you want to process, also if the image is named as Image.jpg then the respective annotation should be called Image.xml.
 
-Create a classes.txt file with all the class in your dataset, and upload it, example:
+Create a classes.txt file with all the class in your dataset, and upload it, example in:
 
-{% file src=".gitbook/assets/pipe_classes.txt" %}
+Assets/pipe_classes.txt
 
-The last step is to define the requirements needed for the execution, note that the requirements used may change in the future creating dependencies issues, to fix it create an enviroment with the suggest versions, you can use the requirements.txt file below.
+The last step is to define the requirements needed for the execution, note that the requirements used may change in the future creating dependencies issues, to fix it create an enviroment with the suggest versions, you can use the requirements.txt file in Assets/requirements.txt.
 
-{% file src="img/requirements.txt" %}
 
 ## Set Colab enviroment
 
